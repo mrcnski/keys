@@ -50,9 +50,6 @@ This includes when `keys-reset' is called and when the mode is enabled."
 
 (defvar keys-keys-current '())
 
-;; TODO:
-;;  - don't unset keys-current when disabling mode
-;;  - only evaluate this if the mode is set
 (defun keys-indicator ()
   "Generate the keys indicator string.
 
@@ -63,7 +60,8 @@ Can be used in the mode-line, frame title, or other \"mode line constructs\"."
                   (seq-take keys-keys-current keys-display-amount)
                 keys-keys-current)
               keys-indicator-separator)
-   (when keys-indicator-truncated
+   (when (and keys-indicator-truncated
+              (< keys-display-amount (length keys-keys-current)))
      (concat keys-indicator-separator keys-indicator-truncated))))
 
 (defun keys-reset ()
@@ -73,7 +71,8 @@ You can e.g. integrate this with `midnight-mode'."
   (interactive)
   (setq keys-keys-current keys-keys)
   (when keys-random
-    (keys--shuffle-list keys-keys-current)))
+    (keys--shuffle-list keys-keys-current))
+  (run-hooks 'keys-post-change-hook))
 
 ;;; Internal
 
@@ -97,8 +96,7 @@ You can e.g. integrate this with `midnight-mode'."
 (defun keys--enable ()
   "Initialize `keys-mode'."
   (add-hook 'pre-command-hook 'keys--pre-command)
-  (keys-reset)
-  (run-hooks 'keys-post-change-hook))
+  (keys-reset))
 
 (defun keys--disable ()
   "Cleanup `keys-mode'."
