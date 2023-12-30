@@ -20,6 +20,7 @@ Types of changes:
 
 - `keys-random` customization to randomize keys.
 - `keys-reset` command.
+- `keys-error` customization to error on missed keys.
 
 ## [0.1.0] - Sat 30, 2023
 
