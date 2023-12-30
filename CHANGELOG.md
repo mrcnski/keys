@@ -16,6 +16,11 @@ Types of changes:
 
 ## [Unreleased]
 
+### Added
+
+- `keys-random` customization to randomize keys.
+- `keys-reset` command.
+
 ## [0.1.0] - Sat 30, 2023
 
 ### Added

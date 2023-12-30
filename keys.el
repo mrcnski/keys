@@ -36,6 +36,13 @@
   :type 'string
   :group 'keys)
 
+(defcustom keys-random t
+  "If not NIL, shuffle the keys everytime the keys are reset.
+
+This includes when `keys-reset' is called and when the mode is enabled."
+  :type 'boolean
+  :group 'keys)
+
 (defcustom keys-post-change-hook nil
   "Hook run after keys have changed."
   :type 'hook
@@ -59,6 +66,27 @@ Can be used in the mode-line, frame title, or other \"mode line constructs\"."
    (when keys-indicator-truncated
      (concat keys-indicator-separator keys-indicator-truncated))))
 
+(defun keys-reset ()
+  "Reset the state of `keys-mode', including the mode-line indicator.
+
+You can e.g. integrate this with `midnight-mode'."
+  (interactive)
+  (setq keys-keys-current keys-keys)
+  (when keys-random
+    (keys--shuffle-list keys-keys-current)))
+
+;;; Internal
+
+;; From: https://gist.github.com/purcell/34824f1b676e6188540cdf71c7cc9fc4
+(defun keys--shuffle-list (list)
+  "Shuffles LIST randomly, modying it in-place."
+  (dolist (i (reverse (number-sequence 1 (1- (length list)))))
+    (let ((j (random (1+ i)))
+	  (tmp (elt list i)))
+      (setf (elt list i) (elt list j))
+      (setf (elt list j) tmp)))
+  list)
+
 (defun keys--pre-command ()
   "Check if the command matches one of the keys we are trying to learn."
   (let ((key (key-description (this-single-command-keys))))
@@ -66,17 +94,18 @@ Can be used in the mode-line, frame title, or other \"mode line constructs\"."
       (setq keys-keys-current (delete key keys-keys-current))
       (run-hooks 'keys-post-change-hook))))
 
-(defun keys--init ()
+(defun keys--enable ()
   "Initialize `keys-mode'."
   (add-hook 'pre-command-hook 'keys--pre-command)
-  (setq keys-keys-current keys-keys)
+  (keys-reset)
   (run-hooks 'keys-post-change-hook))
 
-(defun keys--cleanup ()
+(defun keys--disable ()
   "Cleanup `keys-mode'."
   (remove-hook 'pre-command-hook 'keys--pre-command)
-  (setq keys-keys-current "")
   (run-hooks 'keys-post-change-hook))
+
+;;; Autoloads
 
 ;;;###autoload
 (define-minor-mode keys-mode
@@ -91,8 +120,8 @@ must have been set before calling `keys-mode'."
   :group 'keys
 
   (if keys-mode
-      (keys--init)
-    (keys--cleanup)))
+      (keys--enable)
+    (keys--disable)))
 
 (provide 'keys)
 ;;; keys.el ends here
