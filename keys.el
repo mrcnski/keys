@@ -10,7 +10,7 @@
 ;;
 ;;; Commentary:
 ;;
-;; Provides keys-mode to help you remember and learn new keybindings.
+;; Provides global-keys-mode to help you remember and learn new keybindings.
 ;;
 ;;; Code:
 
@@ -27,7 +27,7 @@
   :group 'keys)
 
 (defcustom keys-indicator-separator " | "
-  "Separator to use in the `keys-mode' indicator (see `keys-indicator')."
+  "Separator to use in the `global-keys-mode' indicator (see `keys-indicator')."
   :type 'string
   :group 'keys)
 
@@ -65,23 +65,25 @@ Can be used in the mode-line, frame title, or other \"mode line constructs\"."
      (concat keys-indicator-separator keys-indicator-truncated))))
 
 (defun keys-reset ()
-  "Reset the state of `keys-mode', including the mode-line indicator.
+  "Reset the state of `global-keys-mode', including the mode-line indicator.
 
 You can e.g. integrate this with `midnight-mode'."
   (interactive)
-  (setq keys-keys-current keys-keys)
+  (setq keys-keys-current (copy-sequence keys-keys))
   (when keys-random
     (keys--shuffle-list keys-keys-current))
   (run-hooks 'keys-post-change-hook))
 
 ;;; Internal
 
+(defvar keys--keys-commands '())
+
 ;; From: https://gist.github.com/purcell/34824f1b676e6188540cdf71c7cc9fc4
 (defun keys--shuffle-list (list)
   "Shuffles LIST randomly, modying it in-place."
   (dolist (i (reverse (number-sequence 1 (1- (length list)))))
     (let ((j (random (1+ i)))
-	  (tmp (elt list i)))
+	      (tmp (elt list i)))
       (setf (elt list i) (elt list j))
       (setf (elt list j) tmp)))
   list)
@@ -94,30 +96,31 @@ You can e.g. integrate this with `midnight-mode'."
       (run-hooks 'keys-post-change-hook))))
 
 (defun keys--enable ()
-  "Initialize `keys-mode'."
+  "Initialize `global-keys-mode'."
   (add-hook 'pre-command-hook 'keys--pre-command)
   (keys-reset))
 
 (defun keys--disable ()
-  "Cleanup `keys-mode'."
+  "Cleanup `global-keys-mode'."
   (remove-hook 'pre-command-hook 'keys--pre-command)
   (run-hooks 'keys-post-change-hook))
 
 ;;; Autoloads
 
 ;;;###autoload
-(define-minor-mode keys-mode
-  "Toggle `keys-mode'.
+(define-minor-mode global-keys-mode
+  "Toggle `global-keys-mode'.
 
-Starts listening for the keys defined in `keys-keys', so that
-must have been set before calling `keys-mode'."
+Starts listening for the keys defined in `keys-keys'. If you
+update that variable after calling `global-keys-mode', just call
+`keys-reset'."
   :global t
   :init-value nil
   :lighter nil
   :keymap nil
   :group 'keys
 
-  (if keys-mode
+  (if global-keys-mode
       (keys--enable)
     (keys--disable)))
 
