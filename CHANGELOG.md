@@ -14,6 +14,12 @@ Types of changes:
 - `Fixed`: for any bug fixes.
 - `Security`: in case of vulnerabilities.
 
+## [0.2.1] - Sun 31, 2023
+
+### Added
+
+- Commentary in the elisp.
+
 ## [0.2.0] - Sun 31, 2023
 
 ### Added
