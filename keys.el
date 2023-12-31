@@ -8,6 +8,23 @@
 ;; Package-Requires: ((emacs "25.1"))
 ;; Keywords: help
 ;;
+;; This file is NOT part of GNU Emacs.
+;;
+;; This file is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+;;
+;; This file is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+;; GNU General Public License for more details.
+;;
+;; You should have received a copy of the GNU General Public License
+;; along with GNU Emacs; see the file COPYING. If not, write to
+;; the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+;; Boston, MA 02111-1307, USA.
+;;
 ;;; Commentary:
 ;;
 ;; Provides `global-keys-mode' to help you remember and learn new keybindings!
@@ -106,6 +123,12 @@ keybindings."
 
 (defvar keys-keys-current '())
 
+;; A pre-calculated list of commands corresponding to our keys.
+(defvar keys--keys-commands '())
+
+;; If not NIL, we have an error to display in the indicator...!
+(defvar keys--missed-key nil)
+
 (defun keys-indicator ()
   "Generate keys's indicator string.
 
@@ -136,12 +159,6 @@ You can e.g. integrate this with `midnight-mode'."
   (run-hooks 'keys-post-change-hook))
 
 ;;; Internal
-
-;; A pre-calculated list of commands corresponding to our keys.
-(defvar keys--keys-commands '())
-
-;; If not NIL, we have an error to display in the indicator...!
-(defvar keys--missed-key nil)
 
 ;; From: https://gist.github.com/purcell/34824f1b676e6188540cdf71c7cc9fc4
 (defun keys--shuffle-list (list)
@@ -193,12 +210,12 @@ You can e.g. integrate this with `midnight-mode'."
 
 (defun keys--enable ()
   "Initialize `global-keys-mode'."
-  (add-hook 'post-command-hook 'keys--post-command)
+  (add-hook 'post-command-hook #'keys--post-command)
   (keys-reset))
 
 (defun keys--disable ()
   "Cleanup `global-keys-mode'."
-  (remove-hook 'post-command-hook 'keys--post-command)
+  (remove-hook 'post-command-hook #'keys--post-command)
   (run-hooks 'keys-post-change-hook))
 
 ;;; Autoloads
