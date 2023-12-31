@@ -14,6 +14,12 @@ Types of changes:
 - `Fixed`: for any bug fixes.
 - `Security`: in case of vulnerabilities.
 
+## [0.2.2] - Sun 31, 2023
+
+### Added
+
+- License!
+
 ## [0.2.1] - Sun 31, 2023
 
 ### Added
