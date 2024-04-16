@@ -89,8 +89,3 @@ anyone wants to run with it.
 ## Disclaimer
 
 If you use this I'm not liable for your microwave exploding.
-
-But seriously, I realized while developing this how much Emacs and LISP were
-holding me back in life. I won't develop this anymore, but I'm giving it as a
-service to the community. But I'll merge *any* PRs that are submitted. Raise a
-PR deleting everything? Merged! (Luckily no one reads these disclaimers.)
