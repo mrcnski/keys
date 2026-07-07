@@ -143,6 +143,7 @@ Can be used in the mode-line, frame title, or other \"mode line constructs\"."
                   keys-keys-current)
                 keys-indicator-separator)
      (when (and keys-indicator-truncated
+                keys-display-amount
                 (< keys-display-amount (length keys-keys-current)))
        (concat keys-indicator-separator keys-indicator-truncated)))))
 
