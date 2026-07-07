@@ -80,6 +80,12 @@
 
 (require 'seq)
 
+(defgroup keys nil
+  "Learn keybindings by displaying them in the mode-line, frame title, etc."
+  :group 'help
+  :prefix "keys-"
+  :link '(url-link :tag "GitHub" "https://github.com/mrcnski/keys"))
+
 (defcustom keys-keys '()
   "Keys to learn."
   :type '(repeat string)
