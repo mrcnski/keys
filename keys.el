@@ -223,6 +223,7 @@ You can e.g. integrate this with `midnight-mode'."
 (defun keys--disable ()
   "Cleanup `global-keys-mode'."
   (remove-hook 'post-command-hook #'keys--post-command)
+  (setq keys--missed-key nil)
   (run-hooks 'keys-post-change-hook))
 
 ;;; Autoloads
