@@ -4,7 +4,7 @@
 ;;
 ;; Author: Marcin Swieczkowski <marcin@realemail.net>
 ;; URL: https://github.com/mrcnski/keys
-;; Version: 0.2.2
+;; Version: 0.2.3
 ;; Package-Requires: ((emacs "25.1"))
 ;; Keywords: help
 ;;

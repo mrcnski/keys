@@ -14,6 +14,22 @@ Types of changes:
 - `Fixed`: for any bug fixes.
 - `Security`: in case of vulnerabilities.
 
+## [0.2.3] - 2026-07-07
+
+### Added
+
+- Owl mascot!
+- Customize group for `keys` (options now browsable via `M-x customize-group`).
+- ERT test suite (`keys-test.el`).
+
+### Fixed
+
+- `keys-indicator` crashed when `keys-display-amount` was nil (the default).
+- Indicator kept showing "ERROR: missed ..." after disabling `global-keys-mode`.
+- Customize types for `keys-display-amount` and `keys-indicator-truncated`
+  rejected their documented nil values.
+- README documented nonexistent `keys-force`; the real option is `keys-error`.
+
 ## [0.2.2] - Sun 31, 2023
 
 ### Added
