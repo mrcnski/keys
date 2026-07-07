@@ -100,6 +100,8 @@ anyone wants to run with it.
 - [ ] Functions to automate adding indicator to mode/header/frame-title for the
       user.
 - [ ] Some nice statistics for key usage.
+- [ ] Persist progress across Emacs restarts (e.g. a `keys-save-file`), so a
+      mid-day restart doesn't bring back already-practiced keys.
 
 ## Disclaimer
 
