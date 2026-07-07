@@ -14,6 +14,23 @@ Types of changes:
 - `Fixed`: for any bug fixes.
 - `Security`: in case of vulnerabilities.
 
+## [0.2.4] - 2026-07-07
+
+### Added
+
+- CI: byte-compile and tests across Emacs 25.3 through snapshot.
+
+### Changed
+
+- Missed-key detection now looks up command bindings live instead of using a
+  snapshot taken at reset time. It now respects mode-local maps and rebinds,
+  and supports multiple keys bound to the same command.
+
+### Fixed
+
+- Missed-key indicator no longer references a face that doesn't exist on
+  Emacs < 28.
+
 ## [0.2.3] - 2026-07-07
 
 ### Added
