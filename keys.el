@@ -141,7 +141,10 @@ keybindings."
 Can be used in the mode-line, frame title, or other \"mode line constructs\"."
   (if keys--missed-key
       (format "ERROR: missed %s" ; TODO: make this customizable
-              (propertize keys--missed-key 'face 'help-key-binding))
+              ;; `help-key-binding' only exists since Emacs 28.
+              (if (facep 'help-key-binding)
+                  (propertize keys--missed-key 'face 'help-key-binding)
+                keys--missed-key))
     (concat
      (mapconcat 'identity
                 (if keys-display-amount
