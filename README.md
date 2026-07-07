@@ -71,7 +71,7 @@ And here's an example exposing more configuration knobs:
  keys-random t ; By default, keys are shown in a random order
 
               ; Calling associated commands manually is an error!
- keys-force t ; So if you bind `git-link` to C-c g, you get an error when
+ keys-error t ; So if you bind `git-link` to C-c g, you get an error when
               ; invoking `M-x git-link` with this configuration set.
  )
 
