@@ -5,6 +5,8 @@
 
 *Put all your crazy Emacs keys in the mode-line, frame title, or wherever! `keys`
 helps you learn them!*
+
+<img src="keys-frame-title.png" alt="keys indicator showing keybindings in the Emacs frame title" width="370">
 </div>
 
 ## Usage
@@ -12,8 +14,6 @@ helps you learn them!*
 ```
 M-x global-keys-mode
 ```
-
-<img src="keys-frame-title.jpg" alt="keys indicator showing keybindings in the Emacs frame title" width="300">
 
 keys is a simple, unopinionated package with two main features:
 
