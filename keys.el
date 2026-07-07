@@ -129,9 +129,6 @@ keybindings."
 
 (defvar keys-keys-current '())
 
-;; A pre-calculated list of commands corresponding to our keys.
-(defvar keys--keys-commands '())
-
 ;; If not NIL, we have an error to display in the indicator...!
 (defvar keys--missed-key nil)
 
@@ -164,7 +161,6 @@ You can e.g. integrate this with `midnight-mode'."
   (setq keys-keys-current (copy-sequence keys-keys))
   (when keys-random
     (keys--shuffle-list keys-keys-current))
-  (setq keys--keys-commands (keys--make-commands keys-keys))
   (setq keys--missed-key nil)
   (run-hooks 'keys-post-change-hook))
 
@@ -192,31 +188,19 @@ You can e.g. integrate this with `midnight-mode'."
         (when (member key keys-keys-current)
           (setq keys-keys-current (delete key keys-keys-current))
           (run-hooks 'keys-post-change-hook))
-      (when keys-error
-        ;; FIXME: should support multiple keys for the same command.
-        (let ((idx (keys--nth-elt real-this-command keys--keys-commands)))
-          ;; The command has a key set, but was invoked some other way.
-          (when idx
-            (let ((learning-key (nth idx keys-keys)))
-              ;; NOTE: Don't error or Emacs will remove our sneaky command hook.
-              (setq keys--missed-key learning-key)
-              (run-hooks 'keys-post-change-hook)
-              (beep))))))))
-
-;; Um. Why is this not built in.
-;; From https://emacs.stackexchange.com/a/10496/15023
-(defun keys--nth-elt (element xs)
-  "Return zero-indexed position of ELEMENT in list XS, or nil if absent."
-  (let ((idx  0))
-    (catch 'nth-elt
-      (dolist (x  xs)
-        (when (equal element x) (throw 'nth-elt idx))
-        (setq idx (1+ idx)))
-      nil)))
-
-(defun keys--make-commands (keys)
-  "Convert list KEYS to a list of commands."
-  (mapcar #'(lambda (elt) (key-binding (kbd elt))) keys))
+      (when (and keys-error (commandp real-this-command))
+        ;; The command was invoked some other way. Look up its bindings on the
+        ;; spot: this respects mode-local maps and later rebinds, and supports
+        ;; multiple keys for the same command.
+        (let ((learning-key
+               (seq-find (lambda (k) (member k keys-keys))
+                         (mapcar #'key-description
+                                 (where-is-internal real-this-command)))))
+          (when learning-key
+            ;; NOTE: Don't error or Emacs will remove our sneaky command hook.
+            (setq keys--missed-key learning-key)
+            (run-hooks 'keys-post-change-hook)
+            (beep)))))))
 
 (defun keys--enable ()
   "Initialize `global-keys-mode'."

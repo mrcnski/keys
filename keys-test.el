@@ -66,5 +66,48 @@
     (keys--disable)
     (should-not keys--missed-key)))
 
+(defun keys-test--dummy-command ()
+  "Command bound to a learned key in the miss-detection tests."
+  (interactive))
+
+(defmacro keys-test--with-binding (key command &rest body)
+  "Run BODY with KEY globally bound to COMMAND, then unbind."
+  (declare (indent 2))
+  `(unwind-protect
+       (progn
+         (global-set-key (kbd ,key) ,command)
+         ,@body)
+     (global-set-key (kbd ,key) nil)))
+
+;; In batch mode `this-single-command-keys' is empty, so `keys--post-command'
+;; always takes the "invoked some other way" branch — exactly the miss path.
+
+(ert-deftest keys-test-miss-detected-via-live-lookup ()
+  "Invoking a learned command without its key flags that key."
+  (keys-test--with-config ((keys-keys '("C-c C-t k")))
+    (keys-test--with-binding "C-c C-t k" #'keys-test--dummy-command
+      (let ((real-this-command #'keys-test--dummy-command)
+            (ring-bell-function #'ignore))
+        (keys--post-command))
+      (should (equal keys--missed-key "C-c C-t k")))))
+
+(ert-deftest keys-test-miss-respects-rebinding ()
+  "A key rebound after reset must no longer flag its old command."
+  (keys-test--with-config ((keys-keys '("C-c C-t k")))
+    (keys-test--with-binding "C-c C-t k" #'ignore
+      ;; The learned key is now bound to `ignore', not the dummy command;
+      ;; invoking the dummy command is not a miss.
+      (let ((real-this-command #'keys-test--dummy-command)
+            (ring-bell-function #'ignore))
+        (keys--post-command))
+      (should-not keys--missed-key))))
+
+(ert-deftest keys-test-no-miss-for-unrelated-command ()
+  (keys-test--with-config ()
+    (let ((real-this-command #'keys-test--dummy-command)
+          (ring-bell-function #'ignore))
+      (keys--post-command))
+    (should-not keys--missed-key)))
+
 (provide 'keys-test)
 ;;; keys-test.el ends here
