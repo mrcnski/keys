@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 206" width="200" height="206" role="img" aria-label="keys mascot: a friendly owl perched on the middle key of a keyboard row">
+  <title>keys — owl on keycaps</title>
+
+  <!-- ground shadow -->
+  <ellipse cx="100" cy="196" rx="80" ry="6" fill="#000000" opacity="0.06"/>
+
+  <!-- left keycap: violet, left arrow -->
+  <g>
+    <rect x="10" y="148" width="48" height="42" rx="10" fill="#7D6EE8"/>
+    <rect x="14" y="151" width="40" height="28" rx="7" fill="#9B8CFF"/>
+    <path d="M42 165 H28 M34 159 L27 165 L34 171" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  </g>
+
+  <!-- right keycap: amber, right arrow -->
+  <g>
+    <rect x="142" y="148" width="48" height="42" rx="10" fill="#D99A28"/>
+    <rect x="146" y="151" width="40" height="28" rx="7" fill="#F2B441"/>
+    <path d="M158 165 H172 M166 159 L173 165 L166 171" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  </g>
+
+  <!-- center keycap: teal, taller — the perch -->
+  <g>
+    <rect x="62" y="136" width="76" height="54" rx="12" fill="#3FAE95"/>
+    <rect x="67" y="139" width="66" height="36" rx="9" fill="#5BC8AF"/>
+  </g>
+
+  <!-- ear tufts -->
+  <path d="M66 52 L75 32 L88 48 Z" fill="#9B8CFF"/>
+  <path d="M134 52 L125 32 L112 48 Z" fill="#9B8CFF"/>
+
+  <!-- body -->
+  <ellipse cx="100" cy="92" rx="42" ry="48" fill="#9B8CFF"/>
+  <ellipse cx="63" cy="102" rx="12" ry="22" fill="#7D6EE8"/>
+  <ellipse cx="137" cy="102" rx="12" ry="22" fill="#7D6EE8"/>
+  <ellipse cx="100" cy="112" rx="23" ry="18" fill="#ffffff" opacity="0.22"/>
+
+  <!-- eyes -->
+  <circle cx="83" cy="82" r="12" fill="#ffffff"/>
+  <circle cx="85" cy="84" r="5.5" fill="#2b2b3a"/>
+  <circle cx="117" cy="82" r="12" fill="#ffffff"/>
+  <circle cx="119" cy="84" r="5.5" fill="#2b2b3a"/>
+
+  <!-- beak + cheeks -->
+  <path d="M94 96 L106 96 L100 106 Z" fill="#F2B441"/>
+  <circle cx="66" cy="98" r="4" fill="#ffffff" opacity="0.3"/>
+  <circle cx="134" cy="98" r="4" fill="#ffffff" opacity="0.3"/>
+
+  <!-- feet gripping the keycap -->
+  <ellipse cx="86" cy="140" rx="8" ry="4.5" fill="#F2B441"/>
+  <ellipse cx="114" cy="140" rx="8" ry="4.5" fill="#F2B441"/>
+</svg>

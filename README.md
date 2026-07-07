@@ -1,16 +1,24 @@
+<div align="center">
+  <img src="mascot.svg" alt="keys mascot — a friendly owl perched on a keycap" width="180"/>
+
 # keys
 
-Put all your crazy Emacs keys in the mode-line, frame title, or wherever! `keys`
-helps you learn them!
+*Put all your crazy Emacs keys in the mode-line, frame title, or wherever! `keys`
+helps you learn them!*
+</div>
 
-![example](./keys-frame-title.jpg)
+## Usage
 
-## Features
+```
+M-x global-keys-mode
+```
+
+<img src="keys-frame-title.jpg" alt="keys indicator showing keybindings in the Emacs frame title" width="300">
 
 keys is a simple, unopinionated package with two main features:
 
-- A configurable display to remind you about keybindings you want to learn. Keys
-  are removed from the display (called the *indicator*) when they're typed.
+- A configurable display to remind you about keybindings you want to learn.
+  Keys are removed from the display (called the *indicator*) when they're typed.
 - Error messages if you fail to use one of your keys to invoke a command (i.e.
   `M-x`).
 
@@ -72,6 +80,13 @@ And here's an example exposing more configuration knobs:
 (midnight-delay-set 'midnight-delay "1:00am")
 (add-hook 'midnight-hook 'keys-reset)
 ```
+
+## Related
+
+- [free-keys](https://github.com/Fuco1/free-keys): find unused keybindings to
+  assign before adding them to your learning list.
+- [keyfreq](https://github.com/dacap/keyfreq): statistics on which commands
+  and keys you use the most.
 
 ## TODO
 
