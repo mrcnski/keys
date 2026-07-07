@@ -93,7 +93,7 @@
 
 (defcustom keys-display-amount nil
   "If not NIL, only show this many keybindings in the indicator."
-  :type 'integer
+  :type '(choice (const :tag "Show all" nil) integer)
   :group 'keys)
 
 (defcustom keys-indicator-separator " | "
@@ -103,7 +103,7 @@
 
 (defcustom keys-indicator-truncated "…"
   "If not NIL, show this string in the indicator when not all keys are displayed."
-  :type 'string
+  :type '(choice (const :tag "No truncation indicator" nil) string)
   :group 'keys)
 
 (defcustom keys-random t
