@@ -47,7 +47,7 @@ in your frame title:
   (setq frame-title-format '("Emacs" frame-title-keys))
   (add-hook
    'keys-post-change-hook
-   #'(lambda ()
+   (lambda ()
        (let ((indicator (keys-indicator)))
          (setq frame-title-keys
                (when (and global-keys-mode (not (string-empty-p indicator)))
@@ -78,7 +78,7 @@ And here's an example exposing more configuration knobs:
 ;; Integrate with midnight-mode.
 (require 'midnight)
 (midnight-delay-set 'midnight-delay "1:00am")
-(add-hook 'midnight-hook 'keys-reset)
+(add-hook 'midnight-hook #'keys-reset)
 ```
 
 ## Related

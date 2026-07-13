@@ -3,6 +3,7 @@
 ;; Copyright (C) 2024 Marcin Swieczkowski <marcin@realemail.net>
 ;;
 ;; Author: Marcin Swieczkowski <marcin@realemail.net>
+;; Assisted-by: Claude:claude-fable-5
 ;; URL: https://github.com/mrcnski/keys
 ;; Version: 0.2.4
 ;; Package-Requires: ((emacs "25.1"))
@@ -41,7 +42,7 @@
 ;;   (i.e. `M-x`).
 ;;
 ;; For example, you can try to use all your keys every day, and set
-;; `midnight-mode` to reset them for the next day. See below!
+;; `midnight-mode` to reset them for the next day.  See below!
 ;;
 ;; Get started:
 ;;
@@ -65,7 +66,7 @@
 ;;   (setq frame-title-format '("Emacs" frame-title-keys))
 ;;   (add-hook
 ;;    'keys-post-change-hook
-;;    #'(lambda ()
+;;    (lambda ()
 ;;        (let ((indicator (keys-indicator)))
 ;;          (setq frame-title-keys
 ;;                (when (and global-keys-mode (not (string-empty-p indicator)))
@@ -143,7 +144,7 @@ Can be used in the mode-line, frame title, or other \"mode line constructs\"."
                   (propertize keys--missed-key 'face 'help-key-binding)
                 keys--missed-key))
     (concat
-     (mapconcat 'identity
+     (mapconcat #'identity
                 (if keys-display-amount
                     (seq-take keys-keys-current keys-display-amount)
                   keys-keys-current)
@@ -219,7 +220,7 @@ You can e.g. integrate this with `midnight-mode'."
 (define-minor-mode global-keys-mode
   "Toggle `global-keys-mode'.
 
-Starts listening for the keys defined in `keys-keys'. If you
+Starts listening for the keys defined in `keys-keys'.  If you
 update that variable after calling `global-keys-mode', just call
 `keys-reset'."
   :global t
