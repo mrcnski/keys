@@ -77,6 +77,13 @@
 ;;   )
 ;; ```
 ;;
+;; Related packages:
+;;
+;; - `which-key-mode': a built-in mode that helps you discover keys.  It shows
+;; available keys once you start a key sequence.  Answers "what can I press
+;; here?", while keys enforces "press what you promised to learn."
+;; - See the README for more.
+;;
 ;;; Code:
 
 (require 'seq)

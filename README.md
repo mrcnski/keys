@@ -83,6 +83,9 @@ And here's an example exposing more configuration knobs:
 
 ## Related
 
+- [`which-key-mode`]: a built-in mode that helps you discover keys.  It shows
+  available keys once you start a key sequence.  Answers "what can I press
+  here?", while keys enforces "press what you promised to learn."
 - [free-keys](https://github.com/Fuco1/free-keys): find unused keybindings to
   assign before adding them to your learning list.
 - [keyfreq](https://github.com/dacap/keyfreq): statistics on which commands
