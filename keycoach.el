@@ -5,7 +5,7 @@
 ;; Author: Marcin Swieczkowski <marcin@realemail.net>
 ;; Assisted-by: Claude:claude-fable-5
 ;; URL: https://github.com/mrcnski/keycoach
-;; Version: 0.3.0
+;; Version: 0.3.1
 ;; Package-Requires: ((emacs "25.1"))
 ;; Keywords: help
 ;;
@@ -141,11 +141,11 @@ removed again when it is disabled."
                  (const :tag "Header line" header-line)
                  (const :tag "Frame title" frame-title))
   :set (lambda (symbol value)
+         (set-default symbol value)
          ;; Move the indicator right away if the mode is already on.
-         (let ((enabled (bound-and-true-p global-keycoach-mode)))
-           (when enabled (keycoach--uninstall-indicator))
-           (set-default symbol value)
-           (when enabled (keycoach--install-indicator))))
+         ;; Installing takes it out of wherever it was first.
+         (when (bound-and-true-p global-keycoach-mode)
+           (keycoach--install-indicator)))
   :group 'keycoach)
 
 (defcustom keycoach-indicator-format "%s"
@@ -216,9 +216,14 @@ You can e.g. integrate this with `midnight-mode'."
   "The format variable keycoach replaced, saved so it can be restored.")
 
 (defun keycoach--changed ()
-  "Refresh the indicator, then run `keycoach-post-change-hook'."
-  (setq keycoach-indicator-string
-        (let ((indicator (keycoach-indicator)))
+  "Refresh the indicator, then run `keycoach-post-change-hook'.
+
+The indicator is empty while the mode is off, so that `keycoach-reset'
+called from a timer doesn't put keys back on screen."
+  (let ((indicator (if (bound-and-true-p global-keycoach-mode)
+                       (keycoach-indicator)
+                     "")))
+    (setq keycoach-indicator-string
           (if (string= "" indicator)
               ""
             (format keycoach-indicator-format indicator))))
@@ -236,12 +241,17 @@ would be read as a conditional rather than as a list of elements."
 
 (defun keycoach--install-indicator ()
   "Display the indicator in `keycoach-indicator-target'."
+  ;; Enabling an already-enabled mode runs this again.  Without this, the
+  ;; format would be wrapped a second time, and the wrapped copy stranded in
+  ;; `keycoach--saved-format' for good.
+  (keycoach--uninstall-indicator)
   (cond
    ((eq keycoach-indicator-target 'mode-line)
     ;; Leave the rest of `global-mode-string' alone, so that other packages
-    ;; displaying there keep working.
-    (unless global-mode-string
-      (setq global-mode-string '("")))
+    ;; displaying there keep working.  It's a mode line construct, so it may
+    ;; be nil or a bare string rather than a list.
+    (unless (consp global-mode-string)
+      (setq global-mode-string (list (or global-mode-string ""))))
     (unless (memq 'keycoach-indicator-string global-mode-string)
       (setq global-mode-string
             (append global-mode-string '(keycoach-indicator-string)))))
@@ -321,11 +331,9 @@ would be read as a conditional rather than as a list of elements."
   (remove-hook 'post-command-hook #'keycoach--post-command)
   (keycoach--uninstall-indicator)
   (setq keycoach--missed-key nil)
-  ;; Not via `keycoach--changed': the keys survive being turned off, but
-  ;; nothing should be left on screen.
-  (setq keycoach-indicator-string "")
-  (force-mode-line-update t)
-  (run-hooks 'keycoach-post-change-hook))
+  ;; The keys survive being turned off, but `keycoach--changed' clears the
+  ;; indicator: the mode variable is already nil by the time we run.
+  (keycoach--changed))
 
 ;;; Autoloads
 

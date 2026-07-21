@@ -25,6 +25,8 @@
          (keycoach-error t)
          (keycoach--missed-key nil)
          (keycoach-post-change-hook nil)
+         ;; `keycoach--changed' only fills the indicator while the mode is on.
+         (global-keycoach-mode t)
          ,@config)
      (setq keycoach-keys-current (copy-sequence keycoach-keys))
      ,@body))
@@ -37,6 +39,7 @@ like the others and is saved and restored by hand."
   (declare (indent 0))
   `(let ((global-mode-string global-mode-string)
          (frame-title-format frame-title-format)
+         (keycoach-indicator-target nil)
          (keycoach-indicator-string "")
          (keycoach--installed-target nil)
          (keycoach--saved-format nil)
@@ -147,7 +150,18 @@ Otherwise a separator is left stranded once every key has been used."
   (keycoach-test--with-config ()
     (keycoach--changed)
     (should-not (equal keycoach-indicator-string ""))
+    ;; `define-minor-mode' clears the variable before running the body.
+    (setq global-keycoach-mode nil)
     (keycoach--disable)
+    (should (equal keycoach-indicator-string ""))))
+
+(ert-deftest keycoach-test-reset-while-off-shows-nothing ()
+  "`keycoach-reset' on a timer must not put keys back on screen.
+
+`midnight-hook' fires whether or not the mode is on, and the indicator
+may be placed by hand, where nothing else would hide it."
+  (keycoach-test--with-config ((global-keycoach-mode nil))
+    (keycoach-reset)
     (should (equal keycoach-indicator-string ""))))
 
 (ert-deftest keycoach-test-wrap-format-never-starts-with-nil ()
@@ -188,6 +202,40 @@ produces \"\" while (\"\" VAR) produces the value of VAR."
       (keycoach--install-indicator))
     (should (equal global-mode-string '("" keycoach-indicator-string)))))
 
+(ert-deftest keycoach-test-mode-line-tolerates-a-bare-string ()
+  "`global-mode-string' is a construct, so it may be a string, not a list."
+  (keycoach-test--saving-formats
+    (setq global-mode-string "battery")
+    (let ((keycoach-indicator-target 'mode-line))
+      (keycoach--install-indicator))
+    (should (equal global-mode-string '("battery" keycoach-indicator-string)))))
+
+(ert-deftest keycoach-test-frame-title-install-is-idempotent ()
+  "Enabling an already-enabled mode must not wrap the format twice.
+
+Nesting compounds per enable, and teardown then restores the wrapped
+copy rather than the original."
+  (keycoach-test--saving-formats
+    (setq frame-title-format "Emacs")
+    (let ((keycoach-indicator-target 'frame-title))
+      (keycoach--install-indicator)
+      (keycoach--install-indicator)
+      (keycoach--install-indicator))
+    (should (equal frame-title-format '("Emacs" keycoach-indicator-string)))
+    (keycoach--uninstall-indicator)
+    (should (equal frame-title-format "Emacs"))))
+
+(ert-deftest keycoach-test-header-line-install-is-idempotent ()
+  (keycoach-test--saving-formats
+    (setq-default header-line-format nil)
+    (let ((keycoach-indicator-target 'header-line))
+      (keycoach--install-indicator)
+      (keycoach--install-indicator))
+    (should (equal (default-value 'header-line-format)
+                   '("" keycoach-indicator-string)))
+    (keycoach--uninstall-indicator)
+    (should-not (default-value 'header-line-format))))
+
 (ert-deftest keycoach-test-frame-title-round-trip ()
   (keycoach-test--saving-formats
     (setq frame-title-format "Emacs")
@@ -226,6 +274,49 @@ produces \"\" while (\"\" VAR) produces the value of VAR."
     (let ((keycoach-indicator-target 'frame-title))
       (keycoach--uninstall-indicator))
     (should (equal global-mode-string '("")))))
+
+(ert-deftest keycoach-test-mode-toggle-leaves-no-trace ()
+  "Turning the mode on twice and off must leave the format as it was.
+
+Exercises the real entry points, since it's `global-keycoach-mode'
+being called again that installs a second time."
+  (keycoach-test--saving-formats
+    (let ((keycoach-keys '("s-w"))
+          (keycoach-keys-current nil)
+          (keycoach-indicator-target 'frame-title))
+      (setq frame-title-format "Emacs")
+      (unwind-protect
+          (progn
+            (global-keycoach-mode 1)
+            (global-keycoach-mode 1)
+            (should (equal frame-title-format
+                           '("Emacs" keycoach-indicator-string)))
+            (should (equal keycoach-indicator-string "s-w")))
+        (global-keycoach-mode -1)))
+    (should (equal frame-title-format "Emacs"))
+    (should (equal keycoach-indicator-string ""))))
+
+(ert-deftest keycoach-test-retarget-while-on-moves-the-indicator ()
+  "Customizing the target with the mode on moves it, leaving nothing behind.
+
+Covers the `:set' function, the only way the target can change without
+the mode being toggled."
+  (keycoach-test--saving-formats
+    (let ((keycoach-keys '("s-w"))
+          (keycoach-keys-current nil))
+      (setq frame-title-format "Emacs"
+            global-mode-string nil)
+      (customize-set-variable 'keycoach-indicator-target 'frame-title)
+      (unwind-protect
+          (progn
+            (global-keycoach-mode 1)
+            (should (equal frame-title-format
+                           '("Emacs" keycoach-indicator-string)))
+            (customize-set-variable 'keycoach-indicator-target 'mode-line)
+            (should (equal frame-title-format "Emacs"))
+            (should (equal global-mode-string
+                           '("" keycoach-indicator-string))))
+        (global-keycoach-mode -1)))))
 
 (ert-deftest keycoach-test-no-target-installs-nothing ()
   (keycoach-test--saving-formats

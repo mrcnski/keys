@@ -14,6 +14,22 @@ Types of changes:
 - `Fixed`: for any bug fixes.
 - `Security`: in case of vulnerabilities.
 
+## [Unreleased]
+
+## [0.3.1] - 2026-07-21
+
+### Fixed
+
+- Enabling an already-enabled `global-keycoach-mode` no longer wraps
+  `frame-title-format` or `header-line-format` a second time. The nesting
+  compounded with each enable, and turning the mode off then restored the
+  wrapped copy instead of the original, permanently.
+- `keycoach-reset` no longer fills the indicator while the mode is off, which
+  `midnight-hook` could otherwise do at 1am to a hand-placed indicator.
+- Enabling the mode with `keycoach-indicator-target` set to `mode-line` no
+  longer signals `wrong-type-argument` when `global-mode-string` holds a bare
+  string rather than a list. Both are valid mode line constructs.
+
 ## [0.3.0] - 2026-07-21
 
 ### Added
