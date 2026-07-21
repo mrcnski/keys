@@ -1,21 +1,21 @@
 <div align="center">
-  <img src="mascot.svg" alt="keys mascot — a friendly owl perched on a keycap" width="180"/>
+  <img src="mascot.svg" alt="keycoach mascot — a friendly owl perched on a keycap" width="180"/>
 
-# keys
+# keycoach
 
-*Put all your crazy Emacs keys in the mode-line, frame title, or wherever! `keys`
-helps you learn them!*
+*Put all your crazy Emacs keys in the mode-line, frame title, or wherever!
+`keycoach` helps you learn them!*
 
-<img src="keys-frame-title.png" alt="keys indicator showing keybindings in the Emacs frame title" width="370">
+<img src="keycoach-frame-title.png" alt="keycoach indicator showing keybindings in the Emacs frame title" width="370">
 </div>
 
 ## Usage
 
 ```
-M-x global-keys-mode
+M-x global-keycoach-mode
 ```
 
-keys is a simple, unopinionated package with two main features:
+keycoach is a simple, unopinionated package with two main features:
 
 - A configurable display to remind you about keybindings you want to learn.
   Keys are removed from the display (called the *indicator*) when they're typed.
@@ -27,34 +27,35 @@ to reset them for the next day. See below!
 
 ## Get started
 
-For a totally basic setup, this turns on `global-keys-mode` and sticks some keys
-in your frame title:
+For a totally basic setup, this turns on `global-keycoach-mode` and sticks some
+keys in your frame title:
 
 ```el
-(use-package keys
-  :load-path "~/.emacs.d/packages/keys" ; Coming to MELPA soon I hope
+(use-package keycoach
+  :load-path "~/.emacs.d/packages/keycoach" ; Coming to MELPA soon I hope
 
   :config
 
-  (setq keys-keys '("s-w" "M-F" "C-M-y"))
+  (setq keycoach-keys '("s-w" "M-F" "C-M-y"))
 
   ;; Update the indicator every time it should change.
-  ;; You can also just do `(:eval (when global-keys-mode (keys-indicator)))`,
+  ;; You can also just do
+  ;;   `(:eval (when global-keycoach-mode (keycoach-indicator)))`,
   ;;   but this avoids constantly re-calculating the indicator.
   ;; The same idea applies for the mode-line, header, etc.
   (defvar frame-title-keys)
   (defvar frame-title-separator "  —  ")
   (setq frame-title-format '("Emacs" frame-title-keys))
   (add-hook
-   'keys-post-change-hook
+   'keycoach-post-change-hook
    (lambda ()
-       (let ((indicator (keys-indicator)))
+       (let ((indicator (keycoach-indicator)))
          (setq frame-title-keys
-               (when (and global-keys-mode (not (string-empty-p indicator)))
+               (when (and global-keycoach-mode (not (string-empty-p indicator)))
                  (format "%s%s" frame-title-separator indicator))))))
 
-  ;; Ready to turn on keys-mode!
-  (global-keys-mode)
+  ;; Ready to turn on keycoach!
+  (global-keycoach-mode)
   )
 ```
 
@@ -65,27 +66,27 @@ And here's an example exposing more configuration knobs:
 
 ;; Customize some settings
 (setq
- keys-keys '("s-w" "M-F" "C-M-y" "C-x 2" "C-M-," "C-S-v" "s-D" "M-W")
- keys-display-amount 2 ; How many keys to show at once
- keys-indicator-separator " | " ; Customize the indicator!
- keys-random t ; By default, keys are shown in a random order
+ keycoach-keys '("s-w" "M-F" "C-M-y" "C-x 2" "C-M-," "C-S-v" "s-D" "M-W")
+ keycoach-display-amount 2 ; How many keys to show at once
+ keycoach-indicator-separator " | " ; Customize the indicator!
+ keycoach-random t ; By default, keys are shown in a random order
 
               ; Calling associated commands manually is an error!
- keys-error t ; So if you bind `git-link` to C-c g, you get an error when
+ keycoach-error t ; So if you bind `git-link` to C-c g, you get an error when
               ; invoking `M-x git-link` with this configuration set.
  )
 
 ;; Integrate with midnight-mode.
 (require 'midnight)
 (midnight-delay-set 'midnight-delay "1:00am")
-(add-hook 'midnight-hook #'keys-reset)
+(add-hook 'midnight-hook #'keycoach-reset)
 ```
 
 ## Related
 
 - [`which-key-mode`]: a built-in mode that helps you discover keys.  It shows
   available keys once you start a key sequence.  Answers "what can I press
-  here?", while keys enforces "press what you promised to learn."
+  here?", while keycoach enforces "press what you promised to learn."
 - [free-keys](https://github.com/Fuco1/free-keys): find unused keybindings to
   assign before adding them to your learning list.
 - [keyfreq](https://github.com/dacap/keyfreq): statistics on which commands
@@ -103,7 +104,7 @@ anyone wants to run with it.
 - [ ] Functions to automate adding indicator to mode/header/frame-title for the
       user.
 - [ ] Some nice statistics for key usage.
-- [ ] Persist progress across Emacs restarts (e.g. a `keys-save-file`), so a
+- [ ] Persist progress across Emacs restarts (e.g. a `keycoach-save-file`), so a
       mid-day restart doesn't bring back already-practiced keys.
 
 ## Disclaimer

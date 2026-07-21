@@ -14,6 +14,16 @@ Types of changes:
 - `Fixed`: for any bug fixes.
 - `Security`: in case of vulnerabilities.
 
+## [0.3.0] - 2026-07-21
+
+### Changed
+
+- **Renamed the package from `keys` to `keycoach`**, since `keys` was too
+  generic a name for MELPA. Every symbol moved from the `keys-` prefix to
+  `keycoach-`, and `global-keys-mode` is now `global-keycoach-mode`. To
+  upgrade, rename `keys-*` options in your config (e.g. `keys-keys` becomes
+  `keycoach-keys`) and call `global-keycoach-mode`.
+
 ## [0.2.4] - 2026-07-07
 
 ### Added

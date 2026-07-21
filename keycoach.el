@@ -1,11 +1,11 @@
-;;; keys.el --- Learn keybindings  -*- lexical-binding: t; -*-
+;;; keycoach.el --- Learn keybindings  -*- lexical-binding: t; -*-
 ;;
 ;; Copyright (C) 2024 Marcin Swieczkowski <marcin@realemail.net>
 ;;
 ;; Author: Marcin Swieczkowski <marcin@realemail.net>
 ;; Assisted-by: Claude:claude-fable-5
-;; URL: https://github.com/mrcnski/keys
-;; Version: 0.2.4
+;; URL: https://github.com/mrcnski/keycoach
+;; Version: 0.3.0
 ;; Package-Requires: ((emacs "25.1"))
 ;; Keywords: help
 ;;
@@ -28,11 +28,12 @@
 ;;
 ;;; Commentary:
 ;;
-;; Provides `global-keys-mode' to help you remember and learn new keybindings!
+;; Provides `global-keycoach-mode' to help you remember and learn new
+;; keybindings!
 ;;
 ;; Features:
 ;;
-;; keys is a simple, unopinionated package with two main features:
+;; keycoach is a simple, unopinionated package with two main features:
 ;;
 ;; - A configurable display to remind you about keybindings you want to learn.
 ;;   Keys are removed from the display (called the *indicator*) when they're
@@ -46,34 +47,36 @@
 ;;
 ;; Get started:
 ;;
-;; For a totally basic setup, this turns on `global-keys-mode` and sticks some
-;; keys in your frame title:
+;; For a totally basic setup, this turns on `global-keycoach-mode` and sticks
+;; some keys in your frame title:
 ;;
 ;; ```el
-;; (use-package keys
-;;   :load-path "~/.emacs.d/packages/keys" ; Coming to MELPA soon I hope
+;; (use-package keycoach
+;;   :load-path "~/.emacs.d/packages/keycoach" ; Coming to MELPA soon I hope
 ;;
 ;;   :config
 ;;
-;;   (setq keys-keys '("s-w" "M-F" "C-M-y"))
+;;   (setq keycoach-keys '("s-w" "M-F" "C-M-y"))
 ;;
 ;;   ;; Update the indicator every time it should change.
-;;   ;; You can also just do `(:eval (when global-keys-mode (keys-indicator)))`,
+;;   ;; You can also just do
+;;   ;;   `(:eval (when global-keycoach-mode (keycoach-indicator)))`,
 ;;   ;;   but this avoids constantly re-calculating the indicator.
 ;;   ;; The same idea applies for the mode-line, header, etc.
 ;;   (defvar frame-title-keys)
 ;;   (defvar frame-title-separator "  —  ")
 ;;   (setq frame-title-format '("Emacs" frame-title-keys))
 ;;   (add-hook
-;;    'keys-post-change-hook
+;;    'keycoach-post-change-hook
 ;;    (lambda ()
-;;        (let ((indicator (keys-indicator)))
+;;        (let ((indicator (keycoach-indicator)))
 ;;          (setq frame-title-keys
-;;                (when (and global-keys-mode (not (string-empty-p indicator)))
+;;                (when (and global-keycoach-mode
+;;                           (not (string-empty-p indicator)))
 ;;                  (format "%s%s" frame-title-separator indicator))))))
 ;;
-;;   ;; Ready to turn on keys-mode!
-;;   (global-keys-mode)
+;;   ;; Ready to turn on keycoach!
+;;   (global-keycoach-mode)
 ;;   )
 ;; ```
 ;;
@@ -81,101 +84,103 @@
 ;;
 ;; - `which-key-mode': a built-in mode that helps you discover keys.  It shows
 ;; available keys once you start a key sequence.  Answers "what can I press
-;; here?", while keys enforces "press what you promised to learn."
+;; here?", while keycoach enforces "press what you promised to learn."
 ;; - See the README for more.
 ;;
 ;;; Code:
 
 (require 'seq)
 
-(defgroup keys nil
+(defgroup keycoach nil
   "Learn keybindings by displaying them in the mode-line, frame title, etc."
   :group 'help
-  :prefix "keys-"
-  :link '(url-link :tag "GitHub" "https://github.com/mrcnski/keys"))
+  :prefix "keycoach-"
+  :link '(url-link :tag "GitHub" "https://github.com/mrcnski/keycoach"))
 
-(defcustom keys-keys '()
+(defcustom keycoach-keys '()
   "Keys to learn."
   :type '(repeat string)
-  :group 'keys)
+  :group 'keycoach)
 
-(defcustom keys-display-amount nil
+(defcustom keycoach-display-amount nil
   "If not NIL, only show this many keybindings in the indicator."
   :type '(choice (const :tag "Show all" nil) integer)
-  :group 'keys)
+  :group 'keycoach)
 
-(defcustom keys-indicator-separator " | "
-  "Separator to use in the `global-keys-mode' indicator (see `keys-indicator')."
+(defcustom keycoach-indicator-separator " | "
+  "Separator to use in the `global-keycoach-mode' indicator.
+
+See `keycoach-indicator'."
   :type 'string
-  :group 'keys)
+  :group 'keycoach)
 
-(defcustom keys-indicator-truncated "…"
+(defcustom keycoach-indicator-truncated "…"
   "If not NIL, show this string in the indicator when not all keys are displayed."
   :type '(choice (const :tag "No truncation indicator" nil) string)
-  :group 'keys)
+  :group 'keycoach)
 
-(defcustom keys-random t
+(defcustom keycoach-random t
   "If not NIL, shuffle the keys everytime the keys are reset.
 
-This includes when `keys-reset' is called and when the mode is enabled."
+This includes when `keycoach-reset' is called and when the mode is enabled."
   :type 'boolean
-  :group 'keys)
+  :group 'keycoach)
 
-(defcustom keys-error t
+(defcustom keycoach-error t
   "If not NIL, error if we failed to use a key we are learning.
 
 This means, disallow commands that are associated with any keys
 that we are learning from being called manually, or with other
 keybindings."
   :type 'boolean
-  :group 'keys)
+  :group 'keycoach)
 
-(defcustom keys-post-change-hook nil
+(defcustom keycoach-post-change-hook nil
   "Hook run after keys have changed."
   :type 'hook
-  :group 'keys)
+  :group 'keycoach)
 
-(defvar keys-keys-current '())
+(defvar keycoach-keys-current '())
 
 ;; If not NIL, we have an error to display in the indicator...!
-(defvar keys--missed-key nil)
+(defvar keycoach--missed-key nil)
 
-(defun keys-indicator ()
-  "Generate keys's indicator string.
+(defun keycoach-indicator ()
+  "Generate keycoach's indicator string.
 
 Can be used in the mode-line, frame title, or other \"mode line constructs\"."
-  (if keys--missed-key
+  (if keycoach--missed-key
       (format "ERROR: missed %s" ; TODO: make this customizable
               ;; `help-key-binding' only exists since Emacs 28.
               (if (facep 'help-key-binding)
-                  (propertize keys--missed-key 'face 'help-key-binding)
-                keys--missed-key))
+                  (propertize keycoach--missed-key 'face 'help-key-binding)
+                keycoach--missed-key))
     (concat
      (mapconcat #'identity
-                (if keys-display-amount
-                    (seq-take keys-keys-current keys-display-amount)
-                  keys-keys-current)
-                keys-indicator-separator)
-     (when (and keys-indicator-truncated
-                keys-display-amount
-                (< keys-display-amount (length keys-keys-current)))
-       (concat keys-indicator-separator keys-indicator-truncated)))))
+                (if keycoach-display-amount
+                    (seq-take keycoach-keys-current keycoach-display-amount)
+                  keycoach-keys-current)
+                keycoach-indicator-separator)
+     (when (and keycoach-indicator-truncated
+                keycoach-display-amount
+                (< keycoach-display-amount (length keycoach-keys-current)))
+       (concat keycoach-indicator-separator keycoach-indicator-truncated)))))
 
-(defun keys-reset ()
-  "Reset the state of `global-keys-mode', including the mode-line indicator.
+(defun keycoach-reset ()
+  "Reset the state of `global-keycoach-mode', including the mode-line indicator.
 
 You can e.g. integrate this with `midnight-mode'."
   (interactive)
-  (setq keys-keys-current (copy-sequence keys-keys))
-  (when keys-random
-    (keys--shuffle-list keys-keys-current))
-  (setq keys--missed-key nil)
-  (run-hooks 'keys-post-change-hook))
+  (setq keycoach-keys-current (copy-sequence keycoach-keys))
+  (when keycoach-random
+    (keycoach--shuffle-list keycoach-keys-current))
+  (setq keycoach--missed-key nil)
+  (run-hooks 'keycoach-post-change-hook))
 
 ;;; Internal
 
 ;; From: https://gist.github.com/purcell/34824f1b676e6188540cdf71c7cc9fc4
-(defun keys--shuffle-list (list)
+(defun keycoach--shuffle-list (list)
   "Shuffles LIST randomly, modying it in-place."
   (dolist (i (reverse (number-sequence 1 (1- (length list)))))
     (let ((j (random (1+ i)))
@@ -184,61 +189,61 @@ You can e.g. integrate this with `midnight-mode'."
       (setf (elt list j) tmp)))
   list)
 
-(defun keys--post-command ()
+(defun keycoach--post-command ()
   "Check if the command matches one of the keys we are trying to learn."
-  (when keys--missed-key
-    (setq keys--missed-key nil)
-    (run-hooks 'keys-post-change-hook))
+  (when keycoach--missed-key
+    (setq keycoach--missed-key nil)
+    (run-hooks 'keycoach-post-change-hook))
   (let ((key (key-description (this-single-command-keys))))
     (if
         ;; The last command was invoked by a key we are learning.
-        (member key keys-keys)
-        (when (member key keys-keys-current)
-          (setq keys-keys-current (delete key keys-keys-current))
-          (run-hooks 'keys-post-change-hook))
-      (when (and keys-error (commandp real-this-command))
+        (member key keycoach-keys)
+        (when (member key keycoach-keys-current)
+          (setq keycoach-keys-current (delete key keycoach-keys-current))
+          (run-hooks 'keycoach-post-change-hook))
+      (when (and keycoach-error (commandp real-this-command))
         ;; The command was invoked some other way. Look up its bindings on the
         ;; spot: this respects mode-local maps and later rebinds, and supports
         ;; multiple keys for the same command.
         (let ((learning-key
-               (seq-find (lambda (k) (member k keys-keys))
+               (seq-find (lambda (k) (member k keycoach-keys))
                          (mapcar #'key-description
                                  (where-is-internal real-this-command)))))
           (when learning-key
             ;; NOTE: Don't error or Emacs will remove our sneaky command hook.
-            (setq keys--missed-key learning-key)
-            (run-hooks 'keys-post-change-hook)
+            (setq keycoach--missed-key learning-key)
+            (run-hooks 'keycoach-post-change-hook)
             (beep)))))))
 
-(defun keys--enable ()
-  "Initialize `global-keys-mode'."
-  (add-hook 'post-command-hook #'keys--post-command)
-  (keys-reset))
+(defun keycoach--enable ()
+  "Initialize `global-keycoach-mode'."
+  (add-hook 'post-command-hook #'keycoach--post-command)
+  (keycoach-reset))
 
-(defun keys--disable ()
-  "Cleanup `global-keys-mode'."
-  (remove-hook 'post-command-hook #'keys--post-command)
-  (setq keys--missed-key nil)
-  (run-hooks 'keys-post-change-hook))
+(defun keycoach--disable ()
+  "Cleanup `global-keycoach-mode'."
+  (remove-hook 'post-command-hook #'keycoach--post-command)
+  (setq keycoach--missed-key nil)
+  (run-hooks 'keycoach-post-change-hook))
 
 ;;; Autoloads
 
 ;;;###autoload
-(define-minor-mode global-keys-mode
-  "Toggle `global-keys-mode'.
+(define-minor-mode global-keycoach-mode
+  "Toggle `global-keycoach-mode'.
 
-Starts listening for the keys defined in `keys-keys'.  If you
-update that variable after calling `global-keys-mode', just call
-`keys-reset'."
+Starts listening for the keys defined in `keycoach-keys'.  If you
+update that variable after calling `global-keycoach-mode', just call
+`keycoach-reset'."
   :global t
   :init-value nil
   :lighter nil
   :keymap nil
-  :group 'keys
+  :group 'keycoach
 
-  (if global-keys-mode
-      (keys--enable)
-    (keys--disable)))
+  (if global-keycoach-mode
+      (keycoach--enable)
+    (keycoach--disable)))
 
-(provide 'keys)
-;;; keys.el ends here
+(provide 'keycoach)
+;;; keycoach.el ends here
