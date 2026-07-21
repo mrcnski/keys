@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="mascot.svg" alt="keycoach mascot — a friendly owl perched on a keycap" width="180"/>
+  <img src="mascot.svg" alt="keycoach mascot — a keycap in a coach's cap, with a whistle resting against it" width="180"/>
 
 # keycoach
 

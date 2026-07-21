@@ -1,51 +1,44 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 206" width="200" height="206" role="img" aria-label="keys mascot: a friendly owl perched on the middle key of a keyboard row">
-  <title>keys — owl on keycaps</title>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 206" width="200" height="206" role="img" aria-label="keycoach mascot: a keycap lettered K wearing a coach's cap, with a whistle resting against it">
+  <title>keycoach — keycap coach</title>
 
-  <!-- ground shadow -->
-  <ellipse cx="100" cy="196" rx="80" ry="6" fill="#000000" opacity="0.06"/>
+  <defs>
+    <clipPath id="badge">
+      <rect x="6" y="4" width="188" height="198" rx="28"/>
+    </clipPath>
+  </defs>
 
-  <!-- left keycap: violet, left arrow -->
-  <g>
-    <rect x="10" y="148" width="48" height="42" rx="10" fill="#7D6EE8"/>
-    <rect x="14" y="151" width="40" height="28" rx="7" fill="#9B8CFF"/>
-    <path d="M42 165 H28 M34 159 L27 165 L34 171" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
+  <g clip-path="url(#badge)">
+    <!-- slate badge background -->
+    <rect x="6" y="4" width="188" height="198" fill="#dfe7ea"/>
+
+    <!-- the rest of the key row, running off both edges -->
+    <rect x="-10" y="118" width="48" height="72" rx="12" fill="#b3a688"/>
+    <rect x="-6" y="110" width="40" height="58" rx="10" fill="#d3c8ae"/>
+    <rect x="162" y="118" width="48" height="72" rx="12" fill="#b3a688"/>
+    <rect x="166" y="110" width="40" height="58" rx="10" fill="#d3c8ae"/>
+
+    <!-- the keycap: skirt, then dished top face -->
+    <rect x="44" y="86" width="112" height="94" rx="14" fill="#c2b492"/>
+    <rect x="54" y="74" width="92" height="76" rx="12" fill="#f2eada"/>
+
+    <!-- the cap's shadow on the key face -->
+    <rect x="58" y="85" width="84" height="5" rx="2.5" fill="#e4dbc6"/>
+
+    <!-- legend -->
+    <path d="M89 101 V133 M89 117 L110 101 M89 117 L110 133" fill="none" stroke="#a99d87" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- coach's cap, overhanging the key on both sides so it reads as worn -->
+    <path d="M142 76 Q186 76 186 88 Q166 93 142 86 Z" fill="#4f8a3c"/>
+    <path d="M50 84 C50 30 150 30 150 84 Z" fill="#6aaf50"/>
+    <rect x="50" y="76" width="100" height="9" rx="4" fill="#83c46b"/>
+    <circle cx="100" cy="42" r="4.5" fill="#83c46b"/>
+
+    <!-- whistle resting against the keycap -->
+    <g transform="rotate(-12 126 178)">
+      <rect x="138" y="173" width="14" height="12" rx="4.5" fill="#c08c0a"/>
+      <rect x="100" y="168" width="40" height="22" rx="11" fill="#eaaa0c"/>
+      <rect x="107" y="172" width="22" height="5" rx="2.5" fill="#f4bf3e" opacity="0.8"/>
+      <circle cx="111" cy="180" r="4.4" fill="#2b2b3a" opacity="0.55"/>
+    </g>
   </g>
-
-  <!-- right keycap: amber, right arrow -->
-  <g>
-    <rect x="142" y="148" width="48" height="42" rx="10" fill="#D99A28"/>
-    <rect x="146" y="151" width="40" height="28" rx="7" fill="#F2B441"/>
-    <path d="M158 165 H172 M166 159 L173 165 L166 171" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>
-  </g>
-
-  <!-- center keycap: teal, taller — the perch -->
-  <g>
-    <rect x="62" y="136" width="76" height="54" rx="12" fill="#3FAE95"/>
-    <rect x="67" y="139" width="66" height="36" rx="9" fill="#5BC8AF"/>
-  </g>
-
-  <!-- ear tufts -->
-  <path d="M66 52 L75 32 L88 48 Z" fill="#9B8CFF"/>
-  <path d="M134 52 L125 32 L112 48 Z" fill="#9B8CFF"/>
-
-  <!-- body -->
-  <ellipse cx="100" cy="92" rx="42" ry="48" fill="#9B8CFF"/>
-  <ellipse cx="63" cy="102" rx="12" ry="22" fill="#7D6EE8"/>
-  <ellipse cx="137" cy="102" rx="12" ry="22" fill="#7D6EE8"/>
-  <ellipse cx="100" cy="112" rx="23" ry="18" fill="#ffffff" opacity="0.22"/>
-
-  <!-- eyes -->
-  <circle cx="83" cy="82" r="12" fill="#ffffff"/>
-  <circle cx="85" cy="84" r="5.5" fill="#2b2b3a"/>
-  <circle cx="117" cy="82" r="12" fill="#ffffff"/>
-  <circle cx="119" cy="84" r="5.5" fill="#2b2b3a"/>
-
-  <!-- beak + cheeks -->
-  <path d="M94 96 L106 96 L100 106 Z" fill="#F2B441"/>
-  <circle cx="66" cy="98" r="4" fill="#ffffff" opacity="0.3"/>
-  <circle cx="134" cy="98" r="4" fill="#ffffff" opacity="0.3"/>
-
-  <!-- feet gripping the keycap -->
-  <ellipse cx="86" cy="140" rx="8" ry="4.5" fill="#F2B441"/>
-  <ellipse cx="114" cy="140" rx="8" ry="4.5" fill="#F2B441"/>
 </svg>
