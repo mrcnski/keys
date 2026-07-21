@@ -19,6 +19,8 @@
          (keycoach-display-amount nil)
          (keycoach-indicator-separator " | ")
          (keycoach-indicator-truncated "…")
+         (keycoach-indicator-format "%s")
+         (keycoach-indicator-string "")
          (keycoach-random nil)
          (keycoach-error t)
          (keycoach--missed-key nil)
@@ -26,6 +28,22 @@
          ,@config)
      (setq keycoach-keys-current (copy-sequence keycoach-keys))
      ,@body))
+
+(defmacro keycoach-test--saving-formats (&rest body)
+  "Run BODY, restoring the globals the indicator installs itself into.
+
+`header-line-format' is always buffer-local, so it can't be let-bound
+like the others and is saved and restored by hand."
+  (declare (indent 0))
+  `(let ((global-mode-string global-mode-string)
+         (frame-title-format frame-title-format)
+         (keycoach-indicator-string "")
+         (keycoach--installed-target nil)
+         (keycoach--saved-format nil)
+         (saved-header-line (default-value 'header-line-format)))
+     (unwind-protect
+         (progn ,@body)
+       (setq-default header-line-format saved-header-line))))
 
 (ert-deftest keycoach-test-indicator-default-shows-all ()
   "Indicator must not error when `keycoach-display-amount' is nil (the default)."
@@ -108,6 +126,115 @@
           (ring-bell-function #'ignore))
       (keycoach--post-command))
     (should-not keycoach--missed-key)))
+
+;;; Indicator placement
+
+(ert-deftest keycoach-test-indicator-string-uses-format ()
+  (keycoach-test--with-config ((keycoach-indicator-format "  —  %s"))
+    (keycoach--changed)
+    (should (equal keycoach-indicator-string "  —  s-w | M-F | C-M-y"))))
+
+(ert-deftest keycoach-test-indicator-string-empty-stays-empty ()
+  "An empty indicator must not pick up padding from the format string.
+
+Otherwise a separator is left stranded once every key has been used."
+  (keycoach-test--with-config ((keycoach-keys '())
+                               (keycoach-indicator-format "  —  %s"))
+    (keycoach--changed)
+    (should (equal keycoach-indicator-string ""))))
+
+(ert-deftest keycoach-test-disable-clears-indicator-string ()
+  (keycoach-test--with-config ()
+    (keycoach--changed)
+    (should-not (equal keycoach-indicator-string ""))
+    (keycoach--disable)
+    (should (equal keycoach-indicator-string ""))))
+
+(ert-deftest keycoach-test-wrap-format-never-starts-with-nil ()
+  "A construct whose car is nil is read as a conditional, not as a list.
+
+Checked structurally because `format-mode-line' returns \"\" for
+everything in batch mode.  Rendered in a terminal frame, (nil VAR)
+produces \"\" while (\"\" VAR) produces the value of VAR."
+  (should (equal (keycoach--wrap-format nil)
+                 '("" keycoach-indicator-string)))
+  (should (equal (keycoach--wrap-format "Emacs")
+                 '("Emacs" keycoach-indicator-string))))
+
+(ert-deftest keycoach-test-mode-line-preserves-other-packages ()
+  (keycoach-test--saving-formats
+    (setq global-mode-string '("" display-time-string))
+    (let ((keycoach-indicator-target 'mode-line))
+      (keycoach--install-indicator))
+    (should (equal global-mode-string
+                   '("" display-time-string keycoach-indicator-string)))
+    (keycoach--uninstall-indicator)
+    (should (equal global-mode-string '("" display-time-string)))))
+
+(ert-deftest keycoach-test-mode-line-from-empty ()
+  "Installing into an empty `global-mode-string' must not build a conditional."
+  (keycoach-test--saving-formats
+    (setq global-mode-string nil)
+    (let ((keycoach-indicator-target 'mode-line))
+      (keycoach--install-indicator))
+    (should (equal global-mode-string '("" keycoach-indicator-string)))))
+
+(ert-deftest keycoach-test-mode-line-install-is-idempotent ()
+  "Re-enabling the mode must not stack up copies of the indicator."
+  (keycoach-test--saving-formats
+    (setq global-mode-string nil)
+    (let ((keycoach-indicator-target 'mode-line))
+      (keycoach--install-indicator)
+      (keycoach--install-indicator))
+    (should (equal global-mode-string '("" keycoach-indicator-string)))))
+
+(ert-deftest keycoach-test-frame-title-round-trip ()
+  (keycoach-test--saving-formats
+    (setq frame-title-format "Emacs")
+    (let ((keycoach-indicator-target 'frame-title))
+      (keycoach--install-indicator))
+    (should (equal frame-title-format '("Emacs" keycoach-indicator-string)))
+    (keycoach--uninstall-indicator)
+    (should (equal frame-title-format "Emacs"))))
+
+(ert-deftest keycoach-test-frame-title-keeps-later-changes ()
+  "A format set while the mode was on must survive turning the mode off."
+  (keycoach-test--saving-formats
+    (setq frame-title-format "Emacs")
+    (let ((keycoach-indicator-target 'frame-title))
+      (keycoach--install-indicator))
+    (setq frame-title-format "set by the user later")
+    (keycoach--uninstall-indicator)
+    (should (equal frame-title-format "set by the user later"))))
+
+(ert-deftest keycoach-test-header-line-round-trip ()
+  (keycoach-test--saving-formats
+    (setq-default header-line-format nil)
+    (let ((keycoach-indicator-target 'header-line))
+      (keycoach--install-indicator))
+    (should (equal (default-value 'header-line-format)
+                   '("" keycoach-indicator-string)))
+    (keycoach--uninstall-indicator)
+    (should-not (default-value 'header-line-format))))
+
+(ert-deftest keycoach-test-uninstall-follows-installed-target ()
+  "Retargeting must clean up where the indicator actually went."
+  (keycoach-test--saving-formats
+    (setq global-mode-string nil)
+    (let ((keycoach-indicator-target 'mode-line))
+      (keycoach--install-indicator))
+    (let ((keycoach-indicator-target 'frame-title))
+      (keycoach--uninstall-indicator))
+    (should (equal global-mode-string '("")))))
+
+(ert-deftest keycoach-test-no-target-installs-nothing ()
+  (keycoach-test--saving-formats
+    (setq global-mode-string nil
+          frame-title-format "Emacs")
+    (let ((keycoach-indicator-target nil))
+      (keycoach--install-indicator))
+    (should-not global-mode-string)
+    (should (equal frame-title-format "Emacs"))))
 
 (provide 'keycoach-test)
 ;;; keycoach-test.el ends here

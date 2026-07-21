@@ -16,13 +16,24 @@ Types of changes:
 
 ## [0.3.0] - 2026-07-21
 
+### Added
+
+- `keycoach-indicator-target` puts the indicator in the frame title, mode line,
+  or header line for you, replacing all the hook boilerplate.  Defaults to nil,
+  which displays nothing, as before.  Whatever it replaces is restored when the
+  mode is turned off.
+- `keycoach-indicator-string` holds the formatted indicator, refreshed on every
+  change. Use it directly in a mode line construct if you want the indicator
+  somewhere `keycoach-indicator-target` doesn't reach.
+- `keycoach-indicator-format` allows the indicator to be formatted before
+  display, so you can add padding or a separator.
+
 ### Changed
 
-- **Renamed the package from `keys` to `keycoach`**, since `keys` was too
-  generic a name for MELPA. Every symbol moved from the `keys-` prefix to
-  `keycoach-`, and `global-keys-mode` is now `global-keycoach-mode`. To
-  upgrade, rename `keys-*` options in your config (e.g. `keys-keys` becomes
-  `keycoach-keys`) and call `global-keycoach-mode`.
+- **Renamed the package from `keys` to `keycoach`**.  Every symbol moved from
+  the `keys-` prefix to `keycoach-`, and `global-keys-mode` is now
+  `global-keycoach-mode`.  To upgrade, rename `keys-*` options in your config
+  (e.g. `keys-keys` becomes `keycoach-keys`) and call `global-keycoach-mode`.
 
 ## [0.2.4] - 2026-07-07
 

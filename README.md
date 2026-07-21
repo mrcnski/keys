@@ -36,30 +36,21 @@ keys in your frame title:
 
   :config
 
-  (setq keycoach-keys '("s-w" "M-F" "C-M-y"))
-
-  ;; Update the indicator every time it should change.
-  ;; You can also just do
-  ;;   `(:eval (when global-keycoach-mode (keycoach-indicator)))`,
-  ;;   but this avoids constantly re-calculating the indicator.
-  ;; The same idea applies for the mode-line, header, etc.
-  (defvar frame-title-keys)
-  (defvar frame-title-separator "  —  ")
-  (setq frame-title-format '("Emacs" frame-title-keys))
-  (add-hook
-   'keycoach-post-change-hook
-   (lambda ()
-       (let ((indicator (keycoach-indicator)))
-         (setq frame-title-keys
-               (when (and global-keycoach-mode (not (string-empty-p indicator)))
-                 (format "%s%s" frame-title-separator indicator))))))
+  (setq keycoach-keys '("s-w" "M-F" "C-M-y")
+        keycoach-indicator-target 'frame-title)
 
   ;; Ready to turn on keycoach!
   (global-keycoach-mode)
   )
 ```
 
-And here's an example exposing more configuration knobs:
+`keycoach-indicator-target` can be `frame-title`, `mode-line`, `header-line`, or
+nil. Nil is the default: keycoach then displays nothing on its own, and leaves
+the placement to you — see [below](#putting-the-indicator-somewhere-else).
+
+### More knobs
+
+Here's an example exposing more configuration knobs:
 
 ```el
 ;; In :config section...
@@ -69,6 +60,7 @@ And here's an example exposing more configuration knobs:
  keycoach-keys '("s-w" "M-F" "C-M-y" "C-x 2" "C-M-," "C-S-v" "s-D" "M-W")
  keycoach-display-amount 2 ; How many keys to show at once
  keycoach-indicator-separator " | " ; Customize the indicator!
+ keycoach-indicator-format "  —  %s" ; Pad it away from what precedes it
  keycoach-random t ; By default, keys are shown in a random order
 
               ; Calling associated commands manually is an error!
@@ -82,9 +74,27 @@ And here's an example exposing more configuration knobs:
 (add-hook 'midnight-hook #'keycoach-reset)
 ```
 
+### Putting the indicator somewhere else
+
+`keycoach-indicator-string` holds the formatted indicator, refreshed whenever
+the keys change.  Drop the symbol anywhere that takes a mode line construct:
+
+```el
+(setq frame-title-format '("Emacs" keycoach-indicator-string))
+```
+
+It's empty while the mode is off, and empty once you've used every key.
+
+One gotcha, and the reason for the `"Emacs"` above: a mode line construct whose
+first element is nil is read as a *conditional* rather than as a list, and
+displays nothing.  Start the list with a string.
+
+If you'd rather compute the indicator yourself, `keycoach-post-change-hook` runs
+after every change.
+
 ## Related
 
-- [`which-key-mode`]: a built-in mode that helps you discover keys.  It shows
+- `which-key-mode`: a built-in mode that helps you discover keys.  It shows
   available keys once you start a key sequence.  Answers "what can I press
   here?", while keycoach enforces "press what you promised to learn."
 - [free-keys](https://github.com/Fuco1/free-keys): find unused keybindings to
@@ -94,15 +104,12 @@ And here's an example exposing more configuration knobs:
 
 ## TODO
 
-This repo is basic right now, but I see potential for something really cool if
-anyone wants to run with it.
+Here are some potential ideas I have for the package:
 
 - [ ] EASY: Allow setting disallowed commands. For example, if you have
       `my-other-window`, disallow `other-window` to help you learn the new one.
 - [ ] Support for keymaps.
 - [ ] Support detecting prefix arguments, e.g. `C-u C-u C-;`.
-- [ ] Functions to automate adding indicator to mode/header/frame-title for the
-      user.
 - [ ] Some nice statistics for key usage.
 - [ ] Persist progress across Emacs restarts (e.g. a `keycoach-save-file`), so a
       mid-day restart doesn't bring back already-practiced keys.

@@ -56,29 +56,17 @@
 ;;
 ;;   :config
 ;;
-;;   (setq keycoach-keys '("s-w" "M-F" "C-M-y"))
-;;
-;;   ;; Update the indicator every time it should change.
-;;   ;; You can also just do
-;;   ;;   `(:eval (when global-keycoach-mode (keycoach-indicator)))`,
-;;   ;;   but this avoids constantly re-calculating the indicator.
-;;   ;; The same idea applies for the mode-line, header, etc.
-;;   (defvar frame-title-keys)
-;;   (defvar frame-title-separator "  —  ")
-;;   (setq frame-title-format '("Emacs" frame-title-keys))
-;;   (add-hook
-;;    'keycoach-post-change-hook
-;;    (lambda ()
-;;        (let ((indicator (keycoach-indicator)))
-;;          (setq frame-title-keys
-;;                (when (and global-keycoach-mode
-;;                           (not (string-empty-p indicator)))
-;;                  (format "%s%s" frame-title-separator indicator))))))
+;;   (setq keycoach-keys '("s-w" "M-F" "C-M-y")
+;;         keycoach-indicator-target 'frame-title)
 ;;
 ;;   ;; Ready to turn on keycoach!
 ;;   (global-keycoach-mode)
 ;;   )
 ;; ```
+;;
+;; `keycoach-indicator-target' can be `frame-title', `mode-line',
+;; `header-line', or nil.  Nil is the default: keycoach then displays nothing
+;; on its own, and you place `keycoach-indicator-string' wherever you want it.
 ;;
 ;; Related packages:
 ;;
@@ -140,6 +128,48 @@ keybindings."
   :type 'hook
   :group 'keycoach)
 
+(defcustom keycoach-indicator-target nil
+  "Where `global-keycoach-mode' should display the indicator.
+
+When nil, keycoach displays nothing on its own.  Place
+`keycoach-indicator-string' wherever you like instead.
+
+Otherwise the indicator is installed when the mode is enabled, and
+removed again when it is disabled."
+  :type '(choice (const :tag "Nowhere (place it yourself)" nil)
+                 (const :tag "Mode line" mode-line)
+                 (const :tag "Header line" header-line)
+                 (const :tag "Frame title" frame-title))
+  :set (lambda (symbol value)
+         ;; Move the indicator right away if the mode is already on.
+         (let ((enabled (bound-and-true-p global-keycoach-mode)))
+           (when enabled (keycoach--uninstall-indicator))
+           (set-default symbol value)
+           (when enabled (keycoach--install-indicator))))
+  :group 'keycoach)
+
+(defcustom keycoach-indicator-format "%s"
+  "Format string applied to the indicator before it is displayed.
+
+Use it for padding or a separator, e.g. \"  —  %s\".  It is only
+applied when the indicator is non-empty, so nothing is left behind
+once every key has been used.
+
+See `keycoach-indicator-string'."
+  :type 'string
+  :group 'keycoach)
+
+(defvar keycoach-indicator-string ""
+  "The indicator, formatted and kept up to date by `global-keycoach-mode'.
+
+Refreshed whenever the keys change, so putting this symbol in a mode
+line construct is cheaper than calling `keycoach-indicator' on every
+redisplay.  It is empty while the mode is off.
+
+Useful when `keycoach-indicator-target' does not put the indicator
+where you want it: add the symbol to `mode-line-format',
+`frame-title-format', or anywhere else that takes a construct.")
+
 (defvar keycoach-keys-current '())
 
 ;; If not NIL, we have an error to display in the indicator...!
@@ -175,9 +205,74 @@ You can e.g. integrate this with `midnight-mode'."
   (when keycoach-random
     (keycoach--shuffle-list keycoach-keys-current))
   (setq keycoach--missed-key nil)
-  (run-hooks 'keycoach-post-change-hook))
+  (keycoach--changed))
 
 ;;; Internal
+
+(defvar keycoach--installed-target nil
+  "The `keycoach-indicator-target' that is currently installed, if any.")
+
+(defvar keycoach--saved-format nil
+  "The format variable keycoach replaced, saved so it can be restored.")
+
+(defun keycoach--changed ()
+  "Refresh the indicator, then run `keycoach-post-change-hook'."
+  (setq keycoach-indicator-string
+        (let ((indicator (keycoach-indicator)))
+          (if (string= "" indicator)
+              ""
+            (format keycoach-indicator-format indicator))))
+  ;; The keys can change from a timer (`midnight-mode', say), so we can't
+  ;; rely on the redisplay that follows a command.
+  (force-mode-line-update t)
+  (run-hooks 'keycoach-post-change-hook))
+
+(defun keycoach--wrap-format (format)
+  "Return mode line construct FORMAT with the indicator appended to it.
+
+A nil FORMAT becomes an empty string: a construct starting with nil
+would be read as a conditional rather than as a list of elements."
+  (list (or format "") 'keycoach-indicator-string))
+
+(defun keycoach--install-indicator ()
+  "Display the indicator in `keycoach-indicator-target'."
+  (cond
+   ((eq keycoach-indicator-target 'mode-line)
+    ;; Leave the rest of `global-mode-string' alone, so that other packages
+    ;; displaying there keep working.
+    (unless global-mode-string
+      (setq global-mode-string '("")))
+    (unless (memq 'keycoach-indicator-string global-mode-string)
+      (setq global-mode-string
+            (append global-mode-string '(keycoach-indicator-string)))))
+   ((eq keycoach-indicator-target 'header-line)
+    (setq keycoach--saved-format (default-value 'header-line-format))
+    (setq-default header-line-format
+                  (keycoach--wrap-format keycoach--saved-format)))
+   ((eq keycoach-indicator-target 'frame-title)
+    (setq keycoach--saved-format frame-title-format)
+    (setq frame-title-format
+          (keycoach--wrap-format keycoach--saved-format))))
+  (setq keycoach--installed-target keycoach-indicator-target))
+
+(defun keycoach--uninstall-indicator ()
+  "Stop displaying the indicator wherever it was installed."
+  (cond
+   ((eq keycoach--installed-target 'mode-line)
+    (setq global-mode-string
+          (delq 'keycoach-indicator-string global-mode-string)))
+   ;; Only restore what we replaced if nobody has touched it since, so that a
+   ;; format set while the mode was on survives turning the mode off.
+   ((eq keycoach--installed-target 'header-line)
+    (when (equal (default-value 'header-line-format)
+                 (keycoach--wrap-format keycoach--saved-format))
+      (setq-default header-line-format keycoach--saved-format)))
+   ((eq keycoach--installed-target 'frame-title)
+    (when (equal frame-title-format
+                 (keycoach--wrap-format keycoach--saved-format))
+      (setq frame-title-format keycoach--saved-format))))
+  (setq keycoach--installed-target nil
+        keycoach--saved-format nil))
 
 ;; From: https://gist.github.com/purcell/34824f1b676e6188540cdf71c7cc9fc4
 (defun keycoach--shuffle-list (list)
@@ -193,14 +288,14 @@ You can e.g. integrate this with `midnight-mode'."
   "Check if the command matches one of the keys we are trying to learn."
   (when keycoach--missed-key
     (setq keycoach--missed-key nil)
-    (run-hooks 'keycoach-post-change-hook))
+    (keycoach--changed))
   (let ((key (key-description (this-single-command-keys))))
     (if
         ;; The last command was invoked by a key we are learning.
         (member key keycoach-keys)
         (when (member key keycoach-keys-current)
           (setq keycoach-keys-current (delete key keycoach-keys-current))
-          (run-hooks 'keycoach-post-change-hook))
+          (keycoach--changed))
       (when (and keycoach-error (commandp real-this-command))
         ;; The command was invoked some other way. Look up its bindings on the
         ;; spot: this respects mode-local maps and later rebinds, and supports
@@ -212,18 +307,24 @@ You can e.g. integrate this with `midnight-mode'."
           (when learning-key
             ;; NOTE: Don't error or Emacs will remove our sneaky command hook.
             (setq keycoach--missed-key learning-key)
-            (run-hooks 'keycoach-post-change-hook)
+            (keycoach--changed)
             (beep)))))))
 
 (defun keycoach--enable ()
   "Initialize `global-keycoach-mode'."
   (add-hook 'post-command-hook #'keycoach--post-command)
+  (keycoach--install-indicator)
   (keycoach-reset))
 
 (defun keycoach--disable ()
   "Cleanup `global-keycoach-mode'."
   (remove-hook 'post-command-hook #'keycoach--post-command)
+  (keycoach--uninstall-indicator)
   (setq keycoach--missed-key nil)
+  ;; Not via `keycoach--changed': the keys survive being turned off, but
+  ;; nothing should be left on screen.
+  (setq keycoach-indicator-string "")
+  (force-mode-line-update t)
   (run-hooks 'keycoach-post-change-hook))
 
 ;;; Autoloads
