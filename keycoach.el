@@ -135,7 +135,11 @@ When nil, keycoach displays nothing on its own.  Place
 `keycoach-indicator-string' wherever you like instead.
 
 Otherwise the indicator is installed when the mode is enabled, and
-removed again when it is disabled."
+removed again when it is disabled.
+
+Changing this with `setopt' or Customize moves the indicator right
+away.  A plain `setq' doesn't take effect until the mode is next
+turned on."
   :type '(choice (const :tag "Nowhere (place it yourself)" nil)
                  (const :tag "Mode line" mode-line)
                  (const :tag "Header line" header-line)
@@ -170,7 +174,11 @@ Useful when `keycoach-indicator-target' does not put the indicator
 where you want it: add the symbol to `mode-line-format',
 `frame-title-format', or anywhere else that takes a construct.")
 
-(defvar keycoach-keys-current '())
+(defvar keycoach-keys-current '()
+  "The keys from `keycoach-keys' that haven't been typed yet.
+
+Refilled by `keycoach-reset', and emptied a key at a time as you use
+them.  This is what `keycoach-indicator' displays.")
 
 ;; If not NIL, we have an error to display in the indicator...!
 (defvar keycoach--missed-key nil)
@@ -213,7 +221,15 @@ You can e.g. integrate this with `midnight-mode'."
   "The `keycoach-indicator-target' that is currently installed, if any.")
 
 (defvar keycoach--saved-format nil
-  "The format variable keycoach replaced, saved so it can be restored.")
+  "The construct keycoach replaced, saved so that it can be restored.")
+
+(defconst keycoach--target-variables
+  '((header-line . header-line-format)
+    (frame-title . frame-title-format))
+  "The variable each `keycoach-indicator-target' wraps.
+
+`mode-line' is deliberately absent: it appends to `global-mode-string'
+instead of replacing a construct of its own.")
 
 (defun keycoach--changed ()
   "Refresh the indicator, then run `keycoach-post-change-hook'.
@@ -245,48 +261,45 @@ would be read as a conditional rather than as a list of elements."
   ;; format would be wrapped a second time, and the wrapped copy stranded in
   ;; `keycoach--saved-format' for good.
   (keycoach--uninstall-indicator)
-  (cond
-   ((eq keycoach-indicator-target 'mode-line)
-    ;; Leave the rest of `global-mode-string' alone, so that other packages
-    ;; displaying there keep working.  It's a mode line construct, so it may
-    ;; be nil or a bare string rather than a list.
-    (unless (consp global-mode-string)
-      (setq global-mode-string (list (or global-mode-string ""))))
-    (unless (memq 'keycoach-indicator-string global-mode-string)
-      (setq global-mode-string
-            (append global-mode-string '(keycoach-indicator-string)))))
-   ((eq keycoach-indicator-target 'header-line)
-    (setq keycoach--saved-format (default-value 'header-line-format))
-    (setq-default header-line-format
-                  (keycoach--wrap-format keycoach--saved-format)))
-   ((eq keycoach-indicator-target 'frame-title)
-    (setq keycoach--saved-format frame-title-format)
-    (setq frame-title-format
-          (keycoach--wrap-format keycoach--saved-format))))
+  (let ((variable (cdr (assq keycoach-indicator-target
+                            keycoach--target-variables))))
+    (cond
+     ((eq keycoach-indicator-target 'mode-line)
+      ;; Leave the rest of `global-mode-string' alone, so that other packages
+      ;; displaying there keep working.  It's a mode line construct, so it may
+      ;; be nil or a bare string rather than a list.
+      (unless (consp global-mode-string)
+        (setq global-mode-string (list (or global-mode-string ""))))
+      ;; The indicator can already be there, placed by hand.  Adding it again
+      ;; would display it twice.
+      (unless (memq 'keycoach-indicator-string global-mode-string)
+        (setq global-mode-string
+              (append global-mode-string '(keycoach-indicator-string)))))
+     (variable
+      (setq keycoach--saved-format (default-value variable))
+      (set-default variable (keycoach--wrap-format keycoach--saved-format)))))
   (setq keycoach--installed-target keycoach-indicator-target))
 
 (defun keycoach--uninstall-indicator ()
   "Stop displaying the indicator wherever it was installed."
-  (cond
-   ((eq keycoach--installed-target 'mode-line)
-    (setq global-mode-string
-          (delq 'keycoach-indicator-string global-mode-string)))
-   ;; Only restore what we replaced if nobody has touched it since, so that a
-   ;; format set while the mode was on survives turning the mode off.
-   ((eq keycoach--installed-target 'header-line)
-    (when (equal (default-value 'header-line-format)
-                 (keycoach--wrap-format keycoach--saved-format))
-      (setq-default header-line-format keycoach--saved-format)))
-   ((eq keycoach--installed-target 'frame-title)
-    (when (equal frame-title-format
-                 (keycoach--wrap-format keycoach--saved-format))
-      (setq frame-title-format keycoach--saved-format))))
+  (let ((variable (cdr (assq keycoach--installed-target
+                            keycoach--target-variables))))
+    (cond
+     ((eq keycoach--installed-target 'mode-line)
+      (setq global-mode-string
+            (delq 'keycoach-indicator-string global-mode-string)))
+     ;; Only restore what we replaced if nobody has touched it since, so that
+     ;; a format set while the mode was on survives turning the mode off.
+     (variable
+      (when (equal (default-value variable)
+                   (keycoach--wrap-format keycoach--saved-format))
+        (set-default variable keycoach--saved-format)))))
   (setq keycoach--installed-target nil
         keycoach--saved-format nil))
 
 ;; From: https://gist.github.com/purcell/34824f1b676e6188540cdf71c7cc9fc4
 (defun keycoach--shuffle-list (list)
-  "Shuffles LIST randomly, modying it in-place."
+  "Shuffles LIST randomly, modifying it in-place."
   (dolist (i (reverse (number-sequence 1 (1- (length list)))))
     (let ((j (random (1+ i)))
 	      (tmp (elt list i)))
